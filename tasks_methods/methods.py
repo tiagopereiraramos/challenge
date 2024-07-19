@@ -62,6 +62,7 @@ class ScraperMethods:
                 section=item.payload["section"],
                 data_range=int(item.payload["data_range"]),
                 sort_by=int(item.payload["sort_by"]),
+                results=int(item.payload["results"])
             )
             return pay
         else:
