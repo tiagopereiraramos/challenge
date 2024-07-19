@@ -20,7 +20,7 @@ from urllib.parse import unquote
 load_dotenv("config\.env")
 class ProducerMethods:
     @staticmethod
-    def read_csv_create_work_item(debug:bool =True):
+    def read_csv_create_work_item(debug:bool =False):
         csv_file_path = os.path.join("devdata", "csv_input.csv")
 
         if os.path.exists(csv_file_path):

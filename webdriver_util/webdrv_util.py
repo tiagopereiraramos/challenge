@@ -20,7 +20,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from helpers.selector import Selector, TagAttVl
+from helpers.selector import Selector
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime, timedelta  
 
@@ -404,34 +404,6 @@ def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=Timeo
     ) as e:
         logger.critical(f"Exception occurred: {str(e)}")
         return None
-
-
-def find_elm_with_attribute(
-    elm: WebElement, tag_attr_value: TagAttVl | list[TagAttVl], timeout=Timeout
-) -> WebElement | None:
-    if not isinstance(tag_attr_value, list):
-        tag_attr_value = [tag_attr_value]
-    for selector in tag_attr_value:
-        try:
-            target = normalize(selector.vlr)
-            logger.debug(
-                f"Trying to find:{selector.attr}  - with: {selector.tag} and: {target}"
-            )
-            sleep(0.2)
-            e = elm.find_element(By.TAG_NAME, selector.tag)
-            if e.get_attribute(selector.attr) and (
-                target in normalize(e.get_attribute(selector.attr))
-            ):
-                logger.debug(
-                    f"Found: {selector.attr} - with: {selector.tag} and: {target}"
-                )
-                sleep(0.4)
-                return e
-        except (NoSuchElementException, TimeoutException):
-            logger.debug(
-                f"Not Found: {selector.attr} - with: {selector.tag} and: {target}"
-            )
-            continue
 
 
 def find_elm_picture(elm: WebElement, selector: Selector, timeout=Timeout):
