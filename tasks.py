@@ -9,15 +9,6 @@ load_dotenv("config/.env")
 # Initialize logger
 logger = Logs.Returnlog(os.getenv("name_app"), "Tasks")
 
-
-@task
-def get_csv_produce_work_item():
-    """
-    Task to read data from a CSV file and create work items.
-    """
-    ProducerMethods.read_csv_create_work_item()
-
-
 @task
 def scraper_and_output_file():
     """
