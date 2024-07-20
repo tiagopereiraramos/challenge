@@ -1,39 +1,40 @@
 import logging
 from colorlog import ColoredFormatter
 
+
 class Logs:
     """
-    Classe para gerenciamento de logs com formatação colorida.
+    Class for managing logs with colored formatting.
     """
 
     def __init__(self) -> None:
         pass
 
     @staticmethod
-    def Returnlog(nome: str, nome_funcao: str = ""):
+    def Returnlog(name: str, function_name: str = "") -> logging.Logger:
         """
-        Configura e retorna um logger com formatação colorida.
+        Configures and returns a logger with colored formatting.
 
-        Parâmetros:
-        -----------
-        nome : str
-            Nome do logger.
-        nome_funcao : str, opcional
-            Nome da função associada ao logger. Padrão é uma string vazia.
+        Args:
+        -----
+        name : str
+            Name of the logger.
+        function_name : str, optional
+            Name of the function associated with the logger. Default is an empty string.
 
-        Retorna:
+        Returns:
         --------
         logging.Logger
-            Objeto logger configurado.
+            Configured logger object.
         """
-        log = logging.getLogger(nome + " -> " + nome_funcao)
+        log = logging.getLogger(name + " -> " + function_name)
         log.setLevel(logging.DEBUG)
 
         LOG_COLORS = {
             "DEBUG": "white",
             "INFO": "green",
             "ERROR": "red",
-            "WARNING": "blue"
+            "WARNING": "blue",
         }
 
         formatter = ColoredFormatter(

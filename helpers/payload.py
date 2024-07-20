@@ -8,7 +8,7 @@ class Payload:
     section: str
     data_range: int
     sort_by: int
-    results:int
+    results: int
 
     def __str__(self):
         """Returns a string containing only the non-default field values."""

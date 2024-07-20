@@ -18,4 +18,3 @@ class Selector:
             if getattr(self, field.name)
         )
         return f"{type(self).__name__}({s})"
-
