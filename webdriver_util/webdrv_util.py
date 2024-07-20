@@ -212,68 +212,85 @@ def get_working_proxy(attempts_per_provider=50):
     return None
 
 
-def get_driver(
-    site_url: str, headless: bool = False, use_proxy: bool = False
-) -> Selenium:
-    """
-    Returns a Selenium object to interact with the site. It is used for testing purposes.
+import os  
+import traceback  
+from selenium.webdriver.chrome.options import Options  
+from RPA.Browser.Selenium import Selenium  
+from Log.logs import Logs  
+  
+logger = Logs.Returnlog(os.getenv("name_app"), "Tasks")  
+  
+def get_driver(site_url: str, headless: bool = False, use_proxy: bool = False) -> Selenium:  
+    """  
+    Returns a Selenium object to interact with the site. It is used for testing purposes.  
+      
+    Args:  
+        site_url (str): URL of the site to connect to.  
+        headless (bool): True if you want to use headless mode.  
+        use_proxy (bool): True if you want to use a proxy.  
+      
+    Returns:  
+        Selenium: Instance of Selenium that is ready to interact.  
+    """  
+    try:  
+        browser = Selenium()  
+        logger.info("Creating browser object")  
+          
+        options = Options()  
+        options.add_argument("--disable-dev-shm-usage")  
+        options.add_argument("--no-sandbox")  
+        options.add_argument("--disable-blink-features=AutomationControlled")  
+        options.add_argument("--window-size=1920,1080")  
+        options.add_argument("--disable-gpu")  
+        options.add_argument("--disable-extensions")  
+        options.add_argument("--disable-software-rasterizer")  
+        options.add_argument("--disable-features=VizDisplayCompositor")  
+        options.add_argument("--disable-infobars")  
+        options.add_argument("--log-level=3")  
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])  
+        options.add_experimental_option("useAutomationExtension", False)  
+  
+        if use_proxy:  
+            proxy = get_working_proxy()  
+            if proxy:  
+                options.add_argument(f"--proxy-server=http://{proxy[0]}:{proxy[1]}")  
+                logger.info(f"Using Proxy {proxy[0]}:{proxy[1]}")  
+            else:  
+                logger.warning("No working proxy found. Continuing without proxy.")  
+  
+        if headless:  
+            options.add_argument("--headless")  
+            options.add_argument("--window-size=1920,1080")  
+            options.add_argument("--disable-gpu")  # Necessary to work around a bug in headless mode  
+            options.add_argument("--disable-extensions")  
+  
+        browser.open_available_browser("about:blank", options=options)  
+        browser.maximize_browser_window()  
+        browser.set_selenium_page_load_timeout(60)  
+        logger.info(f"Accessing the site: {site_url}")  
+        browser.go_to(url=site_url)  
+        browser.delete_all_cookies()  
+        browser.driver.execute_script(  
+            'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'  
+        )  
+        if not headless:
+            browser.execute_cdp(  
+                "Network.setUserAgentOverride",  
+                {  
+                    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"  
+                },  
+            )  
+  
+        logger.info(browser.execute_javascript("return navigator.userAgent;"))  
+        return browser  
+    except Exception as e:  
+        logger.error(f"Error found in get_browser routine: {traceback.format_exc()}")  
+        return None  
+  
+# Example usage  
+site_url = "https://example.com"  
+driver = get_driver(site_url, headless=True)  
 
-    Args:
-        site_url (str): URL of the site to connect to.
-        headless (bool): True if you want to use headless mode.
-        use_proxy (bool): True if you want to use a proxy.
-
-    Returns:
-        Selenium: Instance of Selenium that is ready to interact.
-    """
-    try:
-        browser = Selenium()
-        logger.info("Creating browser object")
-
-        options = Options()
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--window-size=1920,1080")
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option("useAutomationExtension", False)
-
-        if use_proxy:
-            proxy = get_working_proxy()
-            if proxy:
-                options.append(f"--proxy-server=http://{proxy[0]}:{proxy[1]}")
-                logger.info(f"Using Proxy {proxy[0]}:{proxy[1]}")
-            else:
-                logger.warning("No working proxy found. Continuing without proxy.")
-
-        if headless:
-            options.append("--headless")
-            options.append("--window-size=1920x1080")
-
-        browser.open_available_browser("about:blank", options=options)
-        browser.maximize_browser_window()
-        browser.set_selenium_page_load_timeout(60)
-
-        logger.info(f"Accessing the site: {site_url}")
-        browser.go_to(url=site_url)
-
-        browser.delete_all_cookies()
-        browser.driver.execute_script(
-            'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
-        )
-
-        browser.execute_cdp(
-            "Network.setUserAgentOverride",
-            {
-                "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
-            },
-        )
-        logger.info(browser.execute_javascript("return navigator.userAgent;"))
-
-        return browser
-    except Exception as e:
-        logger.error(f"Error found in get_browser routine: {traceback.format_exc()}")
-        return None
 
 
 def normalize(t: str) -> str:

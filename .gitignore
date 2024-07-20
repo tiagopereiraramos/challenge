@@ -20,4 +20,4 @@ testrun/*
 .git
 .venv
 Log/log_app.log
-.tasks_local_test.py
+tasks_local_test.py

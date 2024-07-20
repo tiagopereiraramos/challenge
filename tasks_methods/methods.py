@@ -325,25 +325,36 @@ class ExcelOtherMethods:
         return bool(matches)
 
     @staticmethod
-    def __download_image(url):
-        """
-        Downloads an image from a given URL.
-
-        Args:
-            url (str): The URL of the image.
-
-        Returns:
-            str: The local path where the image is saved.
-        """
-        project_dir = str(os.getcwd())
-        full_path = Path(project_dir, "devdata", "downloads")
-        if os.path.isdir(full_path):
-            full_path = os.path.join(
-                full_path, ExcelOtherMethods.__extract_filename_from_url(url)
-            )
-            logger.info(f"Downloading image: {url}")
-            urllib.request.urlretrieve(url, full_path)
-            return full_path
+    def __download_image(url: str, article_title: str) -> str:  
+        """  
+        Downloads an image from a given URL with a filename based on the article title.  
+        
+        Args:  
+            url (str): The URL of the image.  
+            article_title (str): The title of the article.  
+        
+        Returns:  
+            str: The local path where the image is saved.  
+        """  
+        # Extract the file extension from the URL  
+        file_extension = os.path.splitext(url)[-1]  
+        
+        # Sanitize the article title and ensure it is no more than 20 characters  
+        sanitized_title = re.sub(r'[<>:"/\\|?*]', '', article_title)  
+        short_title = sanitized_title[:20]  
+        
+        # Create the full filename  
+        filename = f"{short_title}{file_extension}"  
+        
+        # Define the download path  
+        project_dir = str(os.getcwd())  
+        full_path = Path(project_dir, "devdata", "downloads")  
+        
+        if os.path.isdir(full_path):  
+            full_path = os.path.join(full_path, filename)  
+            logger.info(f"Downloading image: {url}")  
+            urllib.request.urlretrieve(url, full_path)  
+            return full_path 
 
     @staticmethod
     def prepare_articles(list_articles: list[Article], phrase: str) -> list[Article]:
@@ -363,19 +374,24 @@ class ExcelOtherMethods:
                 art = Article()
                 art.title = article.title
                 art.date = article.date
-                art.title_count_phrase = article.title.lower().count(phrase.lower())
+                art.title_count_phrase = len(
+                    re.findall(re.escape(phrase), article.title.strip(), re.IGNORECASE)
+                )
                 art.description = article.description
-                art.description_count_phrase = 0
+                art.description_count_phrase = len(
+                    re.findall(re.escape(phrase), article.description.strip(), re.IGNORECASE)
+                )
                 art.find_money_title_description = ExcelOtherMethods.__contains_money(
                     article.title
                 )
                 if len(article.picture_filename) > 0:
                     art.picture_filename = article.picture_filename
                     art.picture_local_path = ExcelOtherMethods.__download_image(
-                        art.picture_filename
+                        art.picture_filename,
+                        article.title.strip()
                     )
                 new_list_articles.append(art)
-                logger.info(f"Article created: {art}")
+                logger.info(f"Article created: {art.to_dict()}")
             return new_list_articles
 
     @staticmethod
