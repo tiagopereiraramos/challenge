@@ -49,6 +49,6 @@ def scraper_and_output_file():
                     logger.info("Saving articles to excel")
                     ExcelOtherMethods.export_excel(articles_to_save)
         else:
-            logger.critical(f"There is no search results with phrase:")
+            logger.critical(f"There is no search results with phrases:")
 
 scraper_and_output_file()
