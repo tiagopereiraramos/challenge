@@ -353,7 +353,7 @@ class ExcelOtherMethods:
         if os.path.isdir(full_path):  
             full_path = os.path.join(full_path, filename)  
             logger.info(f"Downloading image: {url}")  
-            urllib.request.urlretrieve(url, full_path)  
+            workitems.outputs.create(files=[urllib.request.urlretrieve(url, full_path)])  
             return full_path 
 
     @staticmethod

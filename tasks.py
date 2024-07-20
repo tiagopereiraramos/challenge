@@ -1,25 +1,27 @@
 from robocorp.tasks import task
 from webdriver_util.webdrv_util import *
 from Log.logs import Logs
-from tasks_methods.methods import ExcelOtherMethods, ProducerMethods, ScraperMethods
+from tasks_methods.methods import ExcelOtherMethods, ScraperMethods
 from dotenv import load_dotenv
+from robocorp import storage, workitems
 
 load_dotenv("config/.env")
 
-# Initialize logger
-logger = Logs.Returnlog(os.getenv("name_app"), "Tasks")
+
 
 @task
 def scraper_and_output_file():
     """
     Task to perform web scraping and export the results to an Excel file.
     """
+    # Initialize logger
+    logger = Logs.Returnlog(storage.get_text("name_app"), "Tasks")
     pay = ScraperMethods.get_work_item()
     if pay:
         logger.info("The current item from the work item has been retrieved")
 
         # Initialize the Selenium driver
-        driver = get_driver(site_url=os.getenv("site_url"), headless=True)
+        driver = get_driver(site_url=storage.get_text("site_url"), headless=True)
         if driver:
             # Perform initial search
             initial_search = ScraperMethods.inicial_search(
