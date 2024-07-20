@@ -1,0 +1,12 @@
+[
+  {
+      "payload": {
+          "phrase_test": "Trump",
+          "section": "Pollitic",
+          "data_range": 1,
+          "sort_by": 1,
+          "results": 15
+      },
+      "files": {}
+  }
+]

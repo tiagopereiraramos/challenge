@@ -7,14 +7,20 @@ Program starts by importing necessary packages:
 - `tasks_methods.methods` where `ScraperMethods`, `ProducerMethods`, and `ExcelOtherMethods` are defined. These must contain the actual code of different tasks.
 - `RPA.Browser.Selenium` is an interface to use the Selenium Webdriver for controlling web browsers.
 
-# Task 1 `get_csv_produce_work_item`
-The first task (`@task`) on line 8 is called `get_csv_produce_work_item`, which calls the method `read_csv_create_work_item()` from the `ProducerMethods` class.
+# Template WorkItem
+[
+  {
+      "payload": {
+          "phrase_test": "Trump", #phrase to search
+          "section": "Pollitic", #topic to select 
+          "data_range": 1, #0 - Relevance(default) | 1- Newest | 2 - oldest
+          "sort_by": 1,
+          "results": 15
+      },
+      "files": {}
+  }
+]
 
-```python
-@task
-def get_csv_produce_work_item():
-    ProducerMethods.read_csv_create_work_item()
-```
 
 # Task 2 `scraper_and_output_file`
 The second task `scraper_and_output_file` starts execution by calling the `get_work_item()` method from the `ScraperMethods` class.

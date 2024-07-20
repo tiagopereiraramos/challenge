@@ -348,12 +348,12 @@ class ExcelOtherMethods:
         
         # Define the download path  
         project_dir = str(os.getcwd())  
-        full_path = Path(project_dir, "devdata", "downloads")  
+        full_path = Path(project_dir, "output", "downloads")  
         
         if os.path.isdir(full_path):  
             full_path = os.path.join(full_path, filename)  
             logger.info(f"Downloading image: {url}")  
-            workitems.outputs.create(files=[urllib.request.urlretrieve(url, full_path)])  
+            urllib.request.urlretrieve(url, full_path) 
             return full_path 
 
     @staticmethod
@@ -415,7 +415,8 @@ class ExcelOtherMethods:
         for row_index, row_data in enumerate(data, start=2):
             for col_index, header in enumerate(headers, start=1):
                 ws.cell(row=row_index, column=col_index, value=row_data.get(header, ""))
-        wb.save(excel_file_path)
         logger.info("Excel file created.")
         logger.info("Creating Output...")
-        workitems.outputs.create(files=[excel_file_path])
+        wb.save(excel_file_path)
+        
+        
