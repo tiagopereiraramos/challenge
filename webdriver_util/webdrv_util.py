@@ -297,10 +297,6 @@ def normalize(t: str) -> str:
     return t.lower().strip()
 
 
-def random_delay(min_delay=1, max_delay=5):
-    time.sleep(random.uniform(min_delay, max_delay))
-
-
 def center_element(driver, elm):
     """
     Centers an element on the page.
@@ -331,7 +327,7 @@ def slow_send_keys(el, text, unfocus_on_complete=True):
             pass
         for c in text:
             el.send_keys(c)
-            sleep(0.01 * random.uniform(0.9, 1.2))
+            sleep(0.03 * random.uniform(0.9, 1.2))
 
         if unfocus_on_complete:
             el.send_keys(Keys.TAB)
