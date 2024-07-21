@@ -46,7 +46,7 @@ def scraper_and_output_file():
                   
                     # Collect articles
                     coll_articles = ScraperMethods.collect_articles(
-                        driver=driver, data_range=pay.results
+                        driver=driver, results=pay.results
                     )
                     if coll_articles:
                         logger.info("Preparing articles to save")
