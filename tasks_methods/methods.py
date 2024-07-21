@@ -40,7 +40,6 @@ class ProducerMethods:
                     payload = Payload(
                         phrase_test=row[0],
                         section=row[1],
-                        data_range=int(row[2]),
                         sort_by=int(row[3]),
                         results=int(row[4]),
                     )
@@ -49,7 +48,6 @@ class ProducerMethods:
                             payload={
                                 "phrase_test": payload.phrase_test,
                                 "section": payload.section,
-                                "data_range": payload.data_range,
                                 "sort_by": payload.sort_by,
                                 "results": payload.results,
                             }
@@ -75,7 +73,6 @@ class ScraperMethods:
             pay = Payload(
                 phrase_test=item.payload["phrase_test"],
                 section=item.payload["section"],
-                data_range=int(item.payload["data_range"]),
                 sort_by=int(item.payload["sort_by"]),
                 results=int(item.payload["results"]),
             )
@@ -118,10 +115,8 @@ class ScraperMethods:
     @staticmethod
     def fine_search(
         driver: WebDriver,
-        phrase: str,
         section: str,
         sort_by: int = 0,
-        data_range: int = 0,
     ):
         """
         Performs fine-tuned search with additional filters.
@@ -134,7 +129,7 @@ class ScraperMethods:
             data_range (int): The data range option (default is 0).
 
         Returns:
-            tuple: (bool, int) indicating success and the data range used.
+            bool indicating success.
         """
         try:
             no_results_match = find_element(
@@ -143,7 +138,7 @@ class ScraperMethods:
             )
             if no_results_match:
                 logger.critical("No search match found.")
-                return False, 0
+                return False
 
             # Expand Filter
             label_search = find_element(
@@ -178,21 +173,14 @@ class ScraperMethods:
                         else:
                             logger.error(f"Sort parameter does not exist: {sort_by}")
                             logger.info("Relevance is selected")
-
-                if data_range >= 0:
-                    # LEGEND: 0= Actual Page, 1= Results you want, 2= All Results
-                    data_range_str = ["Actual Page", "Results you want", "All Results"][
-                        data_range
-                    ]
-                    logger.info(f"{data_range_str} is selected")
-                return True, data_range
+                return True, 
         except Exception as e:
             logger.critical(f"An error occurred: {e.__cause__}.")
-            return False, 0
+            return False
 
     @staticmethod
     def collect_articles(
-        driver: WebDriver, data_range: int = 0
+        driver: WebDriver, results: int = 0
     ) -> list[Article] | None:
         """
         Collects articles from the search results.
@@ -265,7 +253,7 @@ class ScraperMethods:
                             )
                             sleep(0.4)
                             list_articles.append(article)
-                            if data_range == cont:
+                            if results == cont:
                                 more_results = False
                                 break
                             cont += 1
@@ -278,7 +266,7 @@ class ScraperMethods:
                         if button_next:
                             center_element(driver.driver, button_next)
                             click_elm(driver.driver, button_next)
-                            if data_range < cont:
+                            if results < cont:
                                 more_results = False
             return list_articles
         except Exception as e:
@@ -298,15 +286,20 @@ class ExcelOtherMethods:
         Returns:
             str | None: The extracted filename or None if no match found.
         """
-        match = re.search(r"[^/]+$", url)
-        if match:
-            filename_with_extension = match.group(0)
-            filename_with_extension = unquote(filename_with_extension)
-            filename_with_extension = re.sub(
-                r'[<>:"/\\|?*]', "", filename_with_extension
-            )
-            return filename_with_extension
-        else:
+        try:
+            match = re.search(r"[^/]+$", url)
+            if match:
+                filename_with_extension = match.group(0)
+                filename_with_extension = unquote(filename_with_extension)
+                filename_with_extension = re.sub(
+                    r'[<>:"/\\|?*]', "", filename_with_extension
+                )
+                return filename_with_extension
+            else:
+                return None
+        
+        except Exception as e:
+            logger.critical(f"An error occurred: {e.__cause__}.")
             return None
 
     @staticmethod
@@ -368,31 +361,36 @@ class ExcelOtherMethods:
         Returns:
             list[Article]: List of prepared articles.
         """
-        new_list_articles = []
-        if list_articles:
-            for article in list_articles:
-                art = Article()
-                art.title = article.title
-                art.date = article.date
-                art.title_count_phrase = len(
-                    re.findall(re.escape(phrase), article.title.strip(), re.IGNORECASE)
-                )
-                art.description = article.description
-                art.description_count_phrase = len(
-                    re.findall(re.escape(phrase), article.description.strip(), re.IGNORECASE)
-                )
-                art.find_money_title_description = ExcelOtherMethods.__contains_money(
-                    article.title
-                )
-                if len(article.picture_filename) > 0:
-                    art.picture_filename = article.picture_filename
-                    art.picture_local_path = ExcelOtherMethods.__download_image(
-                        art.picture_filename,
-                        article.title.strip()
+        try:
+            new_list_articles = []
+            if list_articles:
+                for article in list_articles:
+                    art = Article()
+                    art.title = article.title
+                    art.date = article.date
+                    art.title_count_phrase = len(
+                        re.findall(re.escape(phrase), article.title.strip(), re.IGNORECASE)
                     )
-                new_list_articles.append(art)
-                logger.info(f"Article created: {art.to_dict()}")
-            return new_list_articles
+                    art.description = article.description
+                    art.description_count_phrase = len(
+                        re.findall(re.escape(phrase), article.description.strip(), re.IGNORECASE)
+                    )
+                    art.find_money_title_description = ExcelOtherMethods.__contains_money(
+                        article.title
+                    )
+                    if len(article.picture_filename) > 0:
+                        art.picture_filename = article.picture_filename
+                        art.picture_local_path = ExcelOtherMethods.__download_image(
+                            art.picture_filename,
+                            article.title.strip()
+                        )
+                    new_list_articles.append(art)
+                    logger.info(f"Article created: {art.to_dict()}")
+                return new_list_articles
+        
+        except Exception as e:
+            logger.critical(f"An error occurred: {e.__cause__}.")
+            return None
 
     @staticmethod
     def export_excel(list_articles: list[Article]):
@@ -402,21 +400,26 @@ class ExcelOtherMethods:
         Args:
             list_articles (list[Article]): List of articles to be exported.
         """
-        project_dir = str(os.getcwd())
-        full_path = Path(project_dir, "output")
-        excel_file_path = os.path.join(full_path, "Articles.xlsx")
-        wb = Workbook()
-        ws = wb.active
-        str_data = Article.articles_to_json(list_articles)
-        data = json.loads(str_data)
-        headers = list(data[0].keys()) if data else []
-        for col_num, header in enumerate(headers, start=1):
-            ws.cell(row=1, column=col_num, value=header)
-        for row_index, row_data in enumerate(data, start=2):
-            for col_index, header in enumerate(headers, start=1):
-                ws.cell(row=row_index, column=col_index, value=row_data.get(header, ""))
-        logger.info("Excel file created.")
-        logger.info("Creating Output...")
-        wb.save(excel_file_path)
+        try:
+            project_dir = str(os.getcwd())
+            full_path = Path(project_dir, "output")
+            excel_file_path = os.path.join(full_path, "Articles.xlsx")
+            wb = Workbook()
+            ws = wb.active
+            str_data = Article.articles_to_json(list_articles)
+            data = json.loads(str_data)
+            headers = list(data[0].keys()) if data else []
+            for col_num, header in enumerate(headers, start=1):
+                ws.cell(row=1, column=col_num, value=header)
+            for row_index, row_data in enumerate(data, start=2):
+                for col_index, header in enumerate(headers, start=1):
+                    ws.cell(row=row_index, column=col_index, value=row_data.get(header, ""))
+            logger.info("Excel file created.")
+            logger.info("Creating Output...")
+            wb.save(excel_file_path)
+        
+        except Exception as e:
+            logger.critical(f"An error occurred: {e.__cause__}.")
+            return None
         
         

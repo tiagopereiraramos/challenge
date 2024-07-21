@@ -32,26 +32,18 @@ def scraper_and_output_file():
                 logger.info("Starting fine searching")
 
                 # Perform fine search
-                fine_searching, data_range_ret = ScraperMethods.fine_search(
+                fine_searching = ScraperMethods.fine_search(
                     driver=driver,
-                    phrase=pay.phrase_test,
                     section=pay.section,
-                    data_range=pay.data_range,
                     sort_by=pay.sort_by,
                 )
                 if fine_searching:
                     logger.info("Fine searching done")
                     logger.info("Starting to collect articles")
-
-                    # Log the data range selection
-                    if data_range_ret == 0:
-                        logger.info("Actual Page results will be collected")
-                    elif data_range_ret == 1:
-                        if pay.results > 0:
-                            logger.info(f"{pay.results} results will be collected")
-                    elif data_range_ret == 2:
-                        logger.info("All results will be collected")
-
+                    
+                    if pay.results > 0:
+                        logger.info(f"{pay.results} results will be collected")
+                  
                     # Collect articles
                     coll_articles = ScraperMethods.collect_articles(
                         driver=driver, data_range=pay.results
@@ -68,12 +60,24 @@ def scraper_and_output_file():
 
                             # Export articles to Excel
                             ExcelOtherMethods.export_excel(articles_to_save)
+                    else:
+                        logger.critical(
+                        f"There are problems to generate articles collection"
+                    )        
                 else:
                     logger.critical(
                         f"There are no search results with the phrase: {pay.phrase_test}"
                     )
+            else:
+                logger.critical(
+                f"There is a problem with a inicial search"
+            )
         else:
             logger.critical(
                 f"There is a problem with a driver object"
+            )
+    else:
+            logger.critical(
+                f"There is a problem with a payback object"
             )
 
