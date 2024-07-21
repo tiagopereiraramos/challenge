@@ -6,7 +6,6 @@ from dataclasses import dataclass, field
 class Payload:
     phrase_test: str
     section: str
-    data_range: int
     sort_by: int
     results: int
 
