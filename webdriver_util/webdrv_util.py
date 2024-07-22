@@ -211,16 +211,8 @@ def get_working_proxy(attempts_per_provider=50):
                 return proxy
     return None
 
-
-import os  
-import traceback  
-from selenium.webdriver.chrome.options import Options  
-from RPA.Browser.Selenium import Selenium  
-from Log.logs import Logs  
   
-logger = Logs.Returnlog(os.getenv("name_app"), "Tasks")  
-  
-def get_driver(site_url: str, headless: bool = False, use_proxy: bool = False) -> Selenium:  
+def get_driver(site_url: str, headless: bool= False, use_proxy: bool = False) -> Selenium:  
     """  
     Returns a Selenium object to interact with the site. It is used for testing purposes.  
       
@@ -234,6 +226,7 @@ def get_driver(site_url: str, headless: bool = False, use_proxy: bool = False) -
     """  
     try:  
         browser = Selenium()  
+            
         logger.info("Creating browser object")  
           
         options = Options()  

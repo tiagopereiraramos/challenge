@@ -40,8 +40,8 @@ class ProducerMethods:
                     payload = Payload(
                         phrase_test=row[0],
                         section=row[1],
-                        sort_by=int(row[3]),
-                        results=int(row[4]),
+                        sort_by=int(row[2]),
+                        results=int(row[3]),
                     )
                     if not debug:
                         workitems.outputs.create(
@@ -215,21 +215,24 @@ class ScraperMethods:
                         for li in li_search_results:
                             logger.info(f"Creating an article object: {cont}")
                             article = Article()
-                            title = li.find_element(
-                                By.CSS_SELECTOR, "h3[class='promo-title']"
-                            )
-                            time = li.find_element(
-                                By.CSS_SELECTOR, "p[class^='promo-timestamp']"
-                            )
-                            description = li.find_element(
-                                By.CSS_SELECTOR, "p[class='promo-description']"
-                            )
+                            try:
+                                title = li.find_element(
+                                    By.CSS_SELECTOR, "h3[class='promo-title']"
+                                )
+                                time = li.find_element(
+                                    By.CSS_SELECTOR, "p[class^='promo-timestamp']"
+                                )
+                                description = li.find_element(
+                                    By.CSS_SELECTOR, "p[class='promo-description']"
+                                )
+                            except:
+                                pass
                             try:
                                 center_element(driver.driver, li)
                                 photo = find_elm_picture(
                                     li, Selector(css='img[src*=".jpg"]')
                                 )
-                                if photo:
+                                if not photo==None:
                                     article.picture_filename = photo
                                     logger.info(
                                         f"Picture found: {article.picture_filename}"
@@ -242,7 +245,7 @@ class ScraperMethods:
                             article.description = description.text.strip()
                             time_str = time.text.strip()
                             parse = parse_time_ago(time_str)
-                            if parse:
+                            if not parse==None:
                                 article.date = parse
                             else:
                                 article.date = datetime.strptime(
@@ -342,6 +345,9 @@ class ExcelOtherMethods:
         # Define the download path  
         project_dir = str(os.getcwd())  
         full_path = Path(project_dir, "output", "downloads")  
+        
+        if not os.path.isdir(full_path):
+            os.makedirs(full_path)
         
         if os.path.isdir(full_path):  
             full_path = os.path.join(full_path, filename)  

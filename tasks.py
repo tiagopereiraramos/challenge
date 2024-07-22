@@ -21,7 +21,7 @@ def scraper_and_output_file():
         logger.info("The current item from the work item has been retrieved")
 
         # Initialize the Selenium driver
-        driver = get_driver(site_url=storage.get_text("site_url"), headless=True)
+        driver = get_driver(site_url=storage.get_text("site_url"), headless=False)
         if driver:
             # Perform initial search
             initial_search = ScraperMethods.inicial_search(
