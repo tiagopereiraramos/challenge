@@ -8,7 +8,6 @@ Program starts by importing necessary packages:
 - `RPA.Browser.Selenium` is an interface to use the Selenium Webdriver for controlling web browsers.
 
 # Template WorkItem
-[
   {
       "payload": {
           "phrase_test": "Trump", 
@@ -17,7 +16,6 @@ Program starts by importing necessary packages:
           "results": 15
       }
   }
-]
 
 # Instructions for Workitem
 - "phrase_test" : content to search
