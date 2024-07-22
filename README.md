@@ -4,7 +4,7 @@ Program starts by importing necessary packages:
 - `log_app.log` for logging events
 - `helpers` which might include some dataclasses
 - `tasks` which is used to define each task that will be executed
-- `tasks_methods.methods` where `ScraperMethods`, `ProducerMethods`, and `ExcelOtherMethods` are defined. These must contain the actual code of different tasks.
+- `tasks_methods.methods` where `ScraperMethods`, and `ExcelOtherMethods` are defined. These must contain the actual code of different tasks.
 - `RPA.Browser.Selenium` is an interface to use the Selenium Webdriver for controlling web browsers.
 
 # Template WorkItem
