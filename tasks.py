@@ -8,20 +8,6 @@ from helpers.payload import Payload
 
 load_dotenv("config/.env")
 
-@task
-def create_item():
-    
-    pay = Payload()
-    pay.phrase_test = "biden"
-    pay.section = "Politic"
-    pay.sort_by = 0
-    pay.results = 15
-    
-
-    logger.info(f"Create payload: {pay.to_dict()}")
-    workitems.outputs.create(payload=pay.to_dict())
-
-
 
 @task
 def scraper_and_output_file():
