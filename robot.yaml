@@ -1,9 +1,7 @@
-# For more details on the format and content:
-# https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-robotyaml
 
 tasks:
   Run Task:
-    shell: python -m robocorp.tasks run tasks.py -t produce_workitems
+    shell: python -m robocorp.tasks run tasks_producer.py -t produce_workitems
     shell: python -m robocorp.tasks run tasks.py -t scraper_and_output_file
 
 environmentConfigs:
@@ -12,7 +10,7 @@ environmentConfigs:
   - environment_darwin_amd64_freeze.yaml
   - conda.yaml
 
-artifactsDir: output
+artifactsDir: output/downloads
 
 PATH:
   - .
