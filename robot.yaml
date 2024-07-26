@@ -3,7 +3,8 @@
 
 tasks:
   Run Task:
-    shell: python -m robocorp.tasks run tasks.py
+    shell: python -m robocorp.tasks run tasks.py -t produce_workitems
+    shell: python -m robocorp.tasks run tasks.py -t scraper_and_output_file
 
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml

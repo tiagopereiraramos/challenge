@@ -8,6 +8,9 @@ from helpers.payload import Payload
 
 load_dotenv("config/.env")
 
+@task
+def produce_workitems():
+    pass
 
 @task
 def scraper_and_output_file():
