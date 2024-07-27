@@ -1,9 +1,11 @@
 
 tasks:
-  Run Task:
-    shell: python -m robocorp.tasks run tasks_producer.py produce_workitems
-    shell: python -m robocorp.tasks run tasks.py scraper
-
+    TaskOne:  Producer
+      command:
+        python -m robocorp.tasks run tasks_producer.py # Comando para executar a primeira task
+    TaskTwo:  Scrapper
+      command:
+        python -m robocorp.tasks run tasks.py  # Comando para executar a segunda task
 environmentConfigs:
   - environment_windows_amd64_freeze.yaml
   - conda.yaml
