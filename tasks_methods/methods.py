@@ -71,6 +71,7 @@ class ProducerMethods:
             logger.critical(f"The CSV file: {csv_file_path} was not found.")
             return None
 
+
 class ScraperMethods:
     @staticmethod
     def get_work_item() -> Payload | None:
