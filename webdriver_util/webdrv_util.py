@@ -4,17 +4,17 @@ import random
 import re
 import traceback
 import requests
-from time import sleep
+from Log.logs import Logs
 from dotenv import load_dotenv
 from RPA.Browser.Selenium import Selenium
-from Log.logs import Logs
-import time
+from time import sleep
 from selenium.common import (
     ElementClickInterceptedException,
     ElementNotInteractableException,
     JavascriptException,
     NoSuchElementException,
     TimeoutException,
+    WebDriverException
 )
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
@@ -26,11 +26,14 @@ from helpers.selector import Selector
 from selenium.webdriver.chrome.options import Options
 from datetime import datetime, timedelta
 
+
+
 # Personal library with Selenium methods for better web scraping.
 load_dotenv("config/.env")
-Timeout = 5
-RetryAttempts = 2
 logger = Logs.Returnlog(os.getenv("name_app"), "Scraping")
+
+TIMEOUT = 5
+RETRYATTEMPTS = 2
 
 
 def parse_time_ago(text) -> datetime | None:
@@ -135,7 +138,6 @@ def search_and_click_topics(driver, names: list, target_name):
             return False, False
 
 
-def get_free_proxy(source="us_proxy"):
     """
     Obtains a list of free proxies.
 
@@ -165,7 +167,7 @@ def get_free_proxy(source="us_proxy"):
         return None
 
 
-def check_proxy(proxy):
+
     """
     Checks if a proxy is working.
 
@@ -191,7 +193,7 @@ def check_proxy(proxy):
     return False
 
 
-def get_working_proxy(attempts_per_provider=50):
+
     """
     Returns a working proxy.
 
@@ -212,80 +214,80 @@ def get_working_proxy(attempts_per_provider=50):
     return None
 
   
-def get_driver(site_url: str, headless: bool= False, use_proxy: bool = False) -> Selenium:  
-    """  
-    Returns a Selenium object to interact with the site. It is used for testing purposes.  
-      
-    Args:  
-        site_url (str): URL of the site to connect to.  
-        headless (bool): True if you want to use headless mode.  
-        use_proxy (bool): True if you want to use a proxy.  
-      
-    Returns:  
-        Selenium: Instance of Selenium that is ready to interact.  
-    """  
-    try:  
-        browser = Selenium()  
-            
-        logger.info("Creating browser object")  
-          
-        options = Options()  
-        options.add_argument("--disable-dev-shm-usage")  
-        options.add_argument("--no-sandbox")  
-        options.add_argument("--disable-blink-features=AutomationControlled")  
-        options.add_argument("--window-size=1920,1080")  
-        options.add_argument("--disable-gpu")  
-        options.add_argument("--disable-extensions")  
-        options.add_argument("--disable-software-rasterizer")  
-        options.add_argument("--disable-features=VizDisplayCompositor")  
-        options.add_argument("--disable-infobars")  
-        options.add_argument("--log-level=3")  
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])  
-        options.add_experimental_option("useAutomationExtension", False)  
-  
-        if use_proxy:  
-            proxy = get_working_proxy()  
-            if proxy:  
-                options.add_argument(f"--proxy-server=http://{proxy[0]}:{proxy[1]}")  
-                logger.info(f"Using Proxy {proxy[0]}:{proxy[1]}")  
-            else:  
-                logger.warning("No working proxy found. Continuing without proxy.")  
-  
-        if headless:  
-            options.add_argument("--headless")  
-            options.add_argument("--window-size=1920,1080")  
-            options.add_argument("--disable-gpu")  # Necessary to work around a bug in headless mode  
-            options.add_argument("--disable-extensions")  
-  
-        browser.open_available_browser("about:blank", options=options)  
-        browser.maximize_browser_window()  
-        browser.set_selenium_page_load_timeout(60)  
-        logger.info(f"Accessing the site: {site_url}")  
-        browser.go_to(url=site_url)  
-        browser.delete_all_cookies()  
-        browser.driver.execute_script(  
-            'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'  
-        )  
+def get_driver(site_url: str, headless: bool = False) -> Selenium | None:
+    """
+    Returns a Selenium object to interact with the site. It is used for testing purposes.
+
+    Args:
+        site_url (str): URL of the site to connect to.
+        headless (bool): True if you want to use headless mode.
+        use_proxy (bool): True if you want to use a proxy.
+
+    Returns:
+        Selenium | None: Instance of Selenium that is ready to interact, or None if an error occurs.
+    """
+    try:
+        # Create a new Selenium browser instance
+        browser = Selenium()
+        logger.info("Creating browser object")
+
+        # Set up Chrome options
+        options = Options()
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--disable-features=VizDisplayCompositor")
+        options.add_argument("--disable-infobars")
+        options.add_argument("--log-level=3")
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option("useAutomationExtension", False)
+        # Add headless mode options if required
+        if headless:
+            options.add_argument("--headless")
+            options.add_argument("--disable-gpu")  # Necessary to work around a bug in headless mode
+            options.add_argument("--disable-extensions")
+
+        # Open the browser and navigate to the site
+        browser.open_browser(url="about:blank", browser='chrome', options=options)
+        browser.maximize_browser_window()
+        browser.set_selenium_page_load_timeout(60)
+        browser.set_browser_implicit_wait(5)
+        logger.info(f"Accessing the site: {site_url}")
+        browser.go_to(url=site_url)
+        browser.delete_all_cookies()
+
+        # Execute JavaScript to remove the webdriver property
+        browser.driver.execute_script(
+            'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
+        )
+
+        # Set a custom user agent if not in headless mode
         if not headless:
-            browser.execute_cdp(  
-                "Network.setUserAgentOverride",  
-                {  
-                    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"  
-                },  
-            )  
+            browser.execute_cdp(
+                "Network.setUserAgentOverride",
+                {
+                    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/117.0.0.0 Safari/537.36"
+                },
+            )
+
+        logger.info(browser.execute_javascript("return navigator.userAgent;"))
+        return browser
+
+    except WebDriverException as e:
+        logger.error(f"WebDriverException encountered: {traceback.format_exc()}")
+        return None
+    except Exception as e:
+        logger.error(f"An error occurred in get_driver: {traceback.format_exc()}")
+        return None
+    
+    
+
+
   
-        logger.info(browser.execute_javascript("return navigator.userAgent;"))  
-        return browser  
-    except Exception as e:  
-        logger.error(f"Error found in get_browser routine: {traceback.format_exc()}")  
-        return None  
-  
-# Example usage  
-site_url = "https://example.com"  
-driver = get_driver(site_url, headless=True)  
-
-
-
 def normalize(t: str) -> str:
     return t.lower().strip()
 
@@ -313,7 +315,6 @@ def slow_send_keys(el, text, unfocus_on_complete=True):
     """
     if el:
         el.click()
-        sleep(0.5)
         try:
             el.clear()
         except:
@@ -341,27 +342,31 @@ def js_click(driver, elm):
         if elm:
             driver.execute_script("arguments[0].click();", elm)
         return elm
-    except (
-        ElementClickInterceptedException,
-        ElementNotInteractableException,
-        JavascriptException,
-        NoSuchElementException,
-        TimeoutException,
-    ) as e:
-        logger.critical(f"Exception occurred: {str(e)}")
-        return None
+    except ElementClickInterceptedException:
+        logger.error("Element click was intercepted. Ensure the element is visible and clickable.")
+    except ElementNotInteractableException:
+        logger.error("Element is not interactable. Ensure the element is visible and enabled.")
+    except JavascriptException:
+        logger.error("JavaScript execution failed. Check the JavaScript code and element state.")
+    except NoSuchElementException:
+        logger.error("No such element found for clicking. Verify the selector and element presence.")
+    except TimeoutException:
+        logger.error("Operation timed out while trying to click the element.")
+    except Exception as e:
+        logger.critical(f"Unexpected error occurred: {e}")
+    return None
 
 
-def click_elm(driver, elm, timeout=Timeout):
+def click_elm(driver, elm, timeout=TIMEOUT):
     try:
         label = "Trying to click"
 
         def get():
             return [
-                WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(elm))
+                WebDriverWait(driver, TIMEOUT).until(EC.element_to_be_clickable(elm))
             ]
 
-        element_to_click = find_it(driver, elements=get, timeout=timeout, label=label)
+        element_to_click = find_it(driver, elements=get, timeout=TIMEOUT, label=label)
         if element_to_click:
             return element_to_click.click()
         else:
@@ -377,7 +382,7 @@ def click_elm(driver, elm, timeout=Timeout):
         return None
 
 
-def find_with_label(driver, tag, label, timeout=Timeout):
+def find_with_label(driver, tag, label, timeout=TIMEOUT):
     try:
         return find_with_attribute(driver, tag, "aria-label", label, timeout)
     except (
@@ -391,12 +396,12 @@ def find_with_label(driver, tag, label, timeout=Timeout):
         return None
 
 
-def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
+def find_all_with_attribute(driver, tag, attr, value, timeout=TIMEOUT):
     try:
         target = normalize(value)
         return [
             e
-            for e in WebDriverWait(driver, timeout).until(
+            for e in WebDriverWait(driver, TIMEOUT).until(
                 EC.visibility_of_any_elements_located(locator=[By.TAG_NAME, tag])
             )
             if e.get_attribute(attr) and (target in normalize(e.get_attribute(attr)))
@@ -412,7 +417,7 @@ def find_all_with_attribute(driver, tag, attr, value, timeout=Timeout):
         return None
 
 
-def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=Timeout):
+def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=TIMEOUT):
     try:
         target = normalize(value)
         return [
@@ -431,7 +436,7 @@ def find_all_elm_with_attribute(elm: WebElement, tag, attr, value, timeout=Timeo
         return None
 
 
-def find_elm_picture(elm: WebElement, selector: Selector, timeout=Timeout):
+def find_elm_picture(elm: WebElement, selector: Selector, timeout=TIMEOUT):
     try:
         logger.debug(f"Trying to find: {selector.css}")
         sleep(0.2)
@@ -446,13 +451,13 @@ def find_elm_picture(elm: WebElement, selector: Selector, timeout=Timeout):
         logger.debug(f"Not Found: {selector.css}")
 
 
-def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
+def find_with_attribute(driver, tag, attr, value, timeout=TIMEOUT):
     try:
         label = "find_with_attribute %s %s %s" % (tag, attr, value)
         return find_it(
             driver,
             lambda: find_all_with_attribute(driver, tag, attr, value),
-            timeout=timeout,
+            timeout=TIMEOUT,
             label=label,
         )
     except (
@@ -466,7 +471,7 @@ def find_with_attribute(driver, tag, attr, value, timeout=Timeout):
         return None
 
 
-def find_with_text(driver, tag, text, timeout=Timeout):
+def find_with_text(driver, tag, text, timeout=TIMEOUT):
     try:
         target = normalize(text)
         label = "find_with_text %s %s" % (tag, target)
@@ -480,7 +485,7 @@ def find_with_text(driver, tag, text, timeout=Timeout):
                 if target in normalize(e.text)
             ]
 
-        return find_it(driver, get, timeout=timeout, label=label)
+        return find_it(driver, get, timeout=TIMEOUT, label=label)
     except (
         ElementClickInterceptedException,
         ElementNotInteractableException,
@@ -492,7 +497,7 @@ def find_with_text(driver, tag, text, timeout=Timeout):
         return None
 
 
-def find_css_with_text(driver, css_selector, text, timeout=Timeout):
+def find_css_with_text(driver, css_selector, text, timeout=TIMEOUT):
     try:
         target = normalize(text)
         label = f"find_css_with_text {css_selector} {target}"
@@ -508,7 +513,7 @@ def find_css_with_text(driver, css_selector, text, timeout=Timeout):
                 if target in normalize(e.text)
             ]
 
-        return find_it(driver, get, timeout=timeout, label=label)
+        return find_it(driver, get, timeout=TIMEOUT, label=label)
     except (
         ElementClickInterceptedException,
         ElementNotInteractableException,
@@ -520,7 +525,7 @@ def find_css_with_text(driver, css_selector, text, timeout=Timeout):
         return None
 
 
-def find_css(driver, css_selector, timeout=Timeout):
+def find_css(driver, css_selector, timeout=TIMEOUT):
     try:
         label = "find_css %s" % css_selector
 
@@ -534,7 +539,7 @@ def find_css(driver, css_selector, timeout=Timeout):
                 )
             ]
 
-        return find_it(driver, elements=get, timeout=timeout, label=label)
+        return find_it(driver, elements=get, timeout=TIMEOUT, label=label)
     except (
         ElementClickInterceptedException,
         ElementNotInteractableException,
@@ -546,7 +551,7 @@ def find_css(driver, css_selector, timeout=Timeout):
         return None
 
 
-def find_all_css(driver: WebDriver, css_selector, timeout=Timeout):
+def find_all_css(driver: WebDriver, css_selector, timeout=TIMEOUT):
     try:
         return driver.find_elements(By.CSS_SELECTOR, css_selector)
     except (
@@ -561,7 +566,7 @@ def find_all_css(driver: WebDriver, css_selector, timeout=Timeout):
 
 
 def find_element(
-    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
+    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = TIMEOUT
 ) -> WebElement | None:
     """
     Find an element by CSS, text, or XPath. If a list of selectors is provided, it will try to find the first one that matches.
@@ -587,22 +592,27 @@ def find_element(
                 )
             elif selector.css and selector.attr:
                 attr, value = selector.attr
-                elm = find_with_attribute(driver, selector.css, attr, value, timeout)
+                elm = find_with_attribute(driver, selector.css, attr, value, TIMEOUT)
             elif selector.css and selector.text:
                 elm = find_css_with_text(
-                    driver, selector.css, selector.text, timeout=timeout
+                    driver, selector.css, selector.text, timeout=TIMEOUT
                 )
             elif selector.css:
-                elm = find_css(driver, selector.css, timeout=timeout)
+                elm = find_css(driver, selector.css, timeout=TIMEOUT)
             if elm:
                 logger.debug(f"Found element: {elm}")
                 return elm
         except NoSuchElementException:
-            continue
+            logger.warning(f"Element not found using selector: {selector}")
+        except TimeoutException:
+            logger.warning(f"Timeout while waiting for element with selector: {selector}")
+        except Exception as e:
+            logger.critical(f"Unexpected error occurred while finding element: {e}")
+
 
 
 def find_elements(
-    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = Timeout
+    driver: WebDriver, selectors: Selector | list[Selector], timeout: int = TIMEOUT
 ) -> WebElement | None:
     """
     Find an element by CSS, text, or XPath. If a list of selectors is provided, it will try to find the first one that matches.
@@ -633,10 +643,10 @@ def find_elements(
                 elm = find_with_attribute(driver, selector.css, attr, value, timeout)
             elif selector.css and selector.text:
                 elm = find_css_with_text(
-                    driver, selector.css, selector.text, timeout=timeout
+                    driver, selector.css, selector.text, timeout=TIMEOUT
                 )
             elif selector.css:
-                elm = find_all_css(driver, selector.css, timeout=timeout)
+                elm = find_all_css(driver, selector.css, timeout=TIMEOUT)
             if elm:
                 logger.debug(f"Found element: {elm}")
                 return elm
@@ -701,7 +711,7 @@ def find_fuzzy(elements, to_string, target):
     )[-1]
 
 
-def page_contains(driver, token, timeout=Timeout):
+def page_contains(driver, token, timeout=TIMEOUT):
     haystack = (
         WebDriverWait(driver, timeout)
         .until(
@@ -712,17 +722,17 @@ def page_contains(driver, token, timeout=Timeout):
     return re.search(token, haystack, re.IGNORECASE) is not None
 
 
-def find_it(driver, elements, timeout=Timeout, label=None):
+def find_it(driver, elements, timeout=TIMEOUT, label=None):
     def get():
         results = elements()
         if len(results) > 0:
             return results[0]
         return None
 
-    return wait_for(get, timeout=timeout, label=label)
+    return wait_for(get, timeout=TIMEOUT, label=label)
 
 
-def wait_for(fun, timeout=Timeout, label=None):
+def wait_for(fun, timeout=TIMEOUT, label=None):
     """
     Waits for a function to return a value.
 
@@ -749,7 +759,7 @@ def wait_for(fun, timeout=Timeout, label=None):
     return fun()
 
 
-def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RetryAttempts):
+def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RETRYATTEMPTS):
     for attempt in range(0, attempts):
         try:
             if attempt > 0:
@@ -758,16 +768,16 @@ def retry(fun, on_fail=lambda: True, sleep_time=1, attempts=RetryAttempts):
         except DontRetryException as e:
             raise e
         except Exception as e:
-            attempt = attempt + 1
+            attempt += 1
             on_fail()
             if attempt >= attempts:
+                logger.critical(f"Function {fun.__name__} failed after {attempts} attempts: {e}")
                 raise e
             lines = traceback.format_exception(e, limit=10)
             logger.warning(
-                f"Retrying function due to {str(e)}\n{''.join(lines)}, attempt={attempt} of {attempts}"
+                f"Retrying function due to error: {e}\n{''.join(lines)}, attempt={attempt} of {attempts}"
             )
             sleep(sleep_time)
-
 
 class DontRetryException(Exception):
     pass

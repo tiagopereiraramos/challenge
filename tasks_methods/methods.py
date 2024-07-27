@@ -2,19 +2,19 @@ import csv
 import json
 import os
 import re
+from urllib.error import URLError
 import urllib.request
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-from Log.logs import Logs
 from openpyxl import Workbook
-from robocorp import storage, workitems
+from robocorp import workitems
 from helpers.article import Article
 from helpers.payload import Payload
 from helpers.selector import Selector
 from webdriver_util.webdrv_util import *
-from selenium.webdriver.chrome.options import Options
 from urllib.parse import unquote
+from dotenv import load_dotenv
 
 load_dotenv("config/.env")
 
@@ -33,30 +33,43 @@ class ProducerMethods:
         """
         csv_file_path = os.path.join("devdata", "csv_input.csv")
         if os.path.exists(csv_file_path):
-            with open(csv_file_path, mode="r", newline="") as file:
-                reader = csv.reader(file)
-                header = next(reader)
-                for row in reader:
-                    payload = Payload(
-                        phrase_test=row[0],
-                        section=row[1],
-                        sort_by=int(row[2]),
-                        results=int(row[3]),
-                    )
-                    if not debug:
-                        workitems.outputs.create(
-                            payload={
-                                "phrase_test": payload.phrase_test,
-                                "section": payload.section,
-                                "sort_by": payload.sort_by,
-                                "results": payload.results,
-                            }
+            try:
+                with open(csv_file_path, mode="r", newline="") as file:
+                    reader = csv.reader(file)
+                    header = next(reader)
+                    for row in reader:
+                        payload = Payload(
+                            phrase_test=row[0],
+                            section=row[1],
+                            sort_by=int(row[2]),
+                            results=int(row[3]),
                         )
-                    else:
-                        return payload
+                        if not debug:
+                            workitems.outputs.create(
+                                payload={
+                                    "phrase_test": payload.phrase_test,
+                                    "section": payload.section,
+                                    "sort_by": payload.sort_by,
+                                    "results": payload.results,
+                                }
+                            )
+                        else:
+                            return payload
+            except FileNotFoundError:
+                logger.critical(f"The CSV file: {csv_file_path} was not found.")
+                return None
+            except ValueError as e:
+                logger.critical(f"ValueError: {e}")
+                return None
+            except csv.Error as e:
+                logger.critical(f"csv.Error: {e}")
+                return None
+            except Exception as e:
+                logger.critical(f"Unexpected error: {e}")
+                return None
         else:
             logger.critical(f"The CSV file: {csv_file_path} was not found.")
-
+            return None
 
 class ScraperMethods:
     @staticmethod
@@ -67,18 +80,28 @@ class ScraperMethods:
         Returns:
             Payload | None: Returns the payload if a work item exists, otherwise None.
         """
-        item = workitems.inputs.current
-        if item:
-            logger.info("Received payload:", item.payload)
-            pay = Payload(
-                phrase_test=item.payload["phrase_test"],
-                section=item.payload["section"],
-                sort_by=int(item.payload["sort_by"]),
-                results=int(item.payload["results"]),
-            )
-            return pay
-        else:
-            logger.critical("An error occurred during the process!")
+        try:
+            item = workitems.inputs.current
+            if item:
+                logger.info(f"Received payload:{item.payload}")
+                pay = Payload(
+                    phrase_test=item.payload["phrase_test"],
+                    section=item.payload["section"],
+                    sort_by=int(item.payload["sort_by"]),
+                    results=int(item.payload["results"]),
+                )
+                return pay
+            else:
+                logger.critical("An error occurred during the process!")
+        except KeyError as e:
+            logger.critical(f"KeyError: {e}")
+            return None
+        except TypeError as e:
+            logger.critical(f"TypeError: {e}")
+            return None
+        except Exception as e:
+            logger.critical(f"Unexpected error: {e}")
+            return None
 
     @staticmethod
     def inicial_search(driver: Selenium, phrase: str):
@@ -108,9 +131,16 @@ class ScraperMethods:
                     center_element(driver.driver, search_field)
                     slow_send_keys(search_field, phrase + Keys.ENTER, False)
                     return True
+        except AttributeError as e:
+            logger.critical(f"AttributeError: {e}")
+            return None
+        except TypeError as e:
+            logger.critical(f"TypeError: {e}")
+            return None
         except Exception as e:
-            print(e.with_traceback())
-            return False
+            logger.critical(f"Unexpected error: {e}")
+            return None
+        return False
 
     @staticmethod
     def fine_search(
@@ -126,7 +156,6 @@ class ScraperMethods:
             phrase (str): The search phrase.
             section (str): The section to filter.
             sort_by (int): The sort option (default is 0).
-            data_range (int): The data range option (default is 0).
 
         Returns:
             bool indicating success.
@@ -147,7 +176,6 @@ class ScraperMethods:
             if label_search:
                 center_element(driver.driver, label_search)
                 click_elm(driver.driver, label_search)
-                sleep(1.5)
                 wait_for_modal(driver.driver)
                 if len(section.strip()) > 0:
                     list_topics = extract_names_from_list_items(driver)
@@ -155,33 +183,33 @@ class ScraperMethods:
                         element_topic, topic = search_and_click_topics(
                             driver.driver, list_topics, section
                         )
-                        if element_topic == False and topic == False:
+                        if not element_topic and not topic:
                             return False, 0
 
                 if sort_by > 0:  # not Relevance (default)
-                    sleep(1.5)
                     select_sort_by = find_element(
                         driver.driver, Selector(css="select[name='s']")
                     )
                     if select_sort_by:
                         if sort_by in [1, 2]:
-                            sleep(1.5)
                             center_element(driver.driver, select_sort_by)
-                            sleep(0.5)
                             select_option_value(select_sort_by, sort_by)
-                            sleep(1.5)
                         else:
                             logger.error(f"Sort parameter does not exist: {sort_by}")
                             logger.info("Relevance is selected")
-                return True, 
+                return (True,)
+        except AttributeError as e:
+            logger.critical(f"AttributeError: {e}")
+            return None
+        except TypeError as e:
+            logger.critical(f"TypeError: {e}")
+            return None
         except Exception as e:
-            logger.critical(f"An error occurred: {e.__cause__}.")
-            return False
+            logger.critical(f"Unexpected error: {e}")
+        return False
 
     @staticmethod
-    def collect_articles(
-        driver: WebDriver, results: int = 0
-    ) -> list[Article] | None:
+    def collect_articles(driver: WebDriver, results: int = 0) -> list[Article] | None:
         """
         Collects articles from the search results.
 
@@ -205,13 +233,11 @@ class ScraperMethods:
                 if search_results_section:
                     logger.info("Search results found")
                     wait_for_modal(driver.driver)
-                    sleep(2.5)
                     li_search_results = find_all_css(
                         driver.driver,
                         'ul[class*="search-results-module-results-menu"] li',
                     )
                     if li_search_results:
-                        sleep(3.5)
                         for li in li_search_results:
                             logger.info(f"Creating an article object: {cont}")
                             article = Article()
@@ -225,27 +251,40 @@ class ScraperMethods:
                                 description = li.find_element(
                                     By.CSS_SELECTOR, "p[class='promo-description']"
                                 )
-                            except:
-                                pass
+                            except AttributeError as e:
+                                logger.critical(f"AttributeError: {e}")
+                                return None
+                            except TypeError as e:
+                                logger.critical(f"TypeError: {e}")
+                                return None
+                            except Exception as e:
+                                logger.critical(f"Unexpected error: {e}")
+                                return None
+
                             try:
                                 center_element(driver.driver, li)
                                 photo = find_elm_picture(
                                     li, Selector(css='img[src*=".jpg"]')
                                 )
-                                if not photo==None:
+                                if not photo is None:
                                     article.picture_filename = photo
                                     logger.info(
                                         f"Picture found: {article.picture_filename}"
                                     )
-                            except:
+                            except AttributeError as e:
+                                logger.critical(f"AttributeError: {e}")
+                            except TypeError as e:
+                                logger.critical(f"TypeError: {e}")
+                            except Exception as e:
+                                logger.critical(f"Unexpected error: {e}")
                                 logger.info("Picture information in article not found.")
-                                pass
+
                             logger.info("Article information found.")
                             article.title = title.text.strip()
                             article.description = description.text.strip()
                             time_str = time.text.strip()
                             parse = parse_time_ago(time_str)
-                            if not parse==None:
+                            if not parse == None:
                                 article.date = parse
                             else:
                                 article.date = datetime.strptime(
@@ -254,7 +293,6 @@ class ScraperMethods:
                             logger.info(
                                 f"Title: {article.title} -- Date: {article.date}"
                             )
-                            sleep(0.4)
                             list_articles.append(article)
                             if results == cont:
                                 more_results = False
@@ -272,8 +310,14 @@ class ScraperMethods:
                             if results < cont:
                                 more_results = False
             return list_articles
+        except AttributeError as e:
+            logger.critical(f"AttributeError: {e}")
+            return None
+        except TypeError as e:
+            logger.critical(f"TypeError: {e}")
+            return None
         except Exception as e:
-            logger.critical(f"An error occurred: {e.__cause__}.")
+            logger.critical(f"Unexpected error: {e}")
             return None
 
 
@@ -300,9 +344,12 @@ class ExcelOtherMethods:
                 return filename_with_extension
             else:
                 return None
-        
+
+        except re.error as e:
+            logger.critical(f"Regex error: {e}")
+            return None
         except Exception as e:
-            logger.critical(f"An error occurred: {e.__cause__}.")
+            logger.critical(f"Unexpected error: {e}")
             return None
 
     @staticmethod
@@ -316,44 +363,55 @@ class ExcelOtherMethods:
         Returns:
             bool: True if monetary amounts are found, otherwise False.
         """
-        pattern = r"\$[0-9,.]+|\b\d+\s*(?:dollars|USD)\b"
-        matches = re.findall(pattern, text)
-        return bool(matches)
+        try:
+            pattern = r"\$[0-9,.]+|\b\d+\s*(?:dollars|USD)\b"
+            matches = re.findall(pattern, text)
+            return bool(matches)
+        except re.error as e:
+            logger.critical(f"Regex error: {e}")
+            return False
 
     @staticmethod
-    def __download_image(url: str, article_title: str) -> str:  
-        """  
-        Downloads an image from a given URL with a filename based on the article title.  
-        
-        Args:  
-            url (str): The URL of the image.  
-            article_title (str): The title of the article.  
-        
-        Returns:  
-            str: The local path where the image is saved.  
-        """  
-        # Extract the file extension from the URL  
-        file_extension = os.path.splitext(url)[-1]  
-        
-        # Sanitize the article title and ensure it is no more than 20 characters  
-        sanitized_title = re.sub(r'[<>:"/\\|?*]', '', article_title)  
-        short_title = sanitized_title[:20]  
-        
-        # Create the full filename  
-        filename = f"{short_title}{file_extension}"  
-        
-        # Define the download path  
-        project_dir = str(os.getcwd())  
-        full_path = Path(project_dir, "output", "downloads")  
-        
-        if not os.path.isdir(full_path):
-            os.makedirs(full_path)
-        
-        if os.path.isdir(full_path):  
-            full_path = os.path.join(full_path, filename)  
-            logger.info(f"Downloading image: {url}")  
-            urllib.request.urlretrieve(url, full_path) 
-            return full_path 
+    def __download_image(url: str, article_title: str) -> str:
+        """
+        Downloads an image from a given URL with a filename based on the article title.
+
+        Args:
+            url (str): The URL of the image.
+            article_title (str): The title of the article.
+
+        Returns:
+            str: The local path where the image is saved.
+        """
+        try:
+            # Extract the file extension from the URL
+            file_extension = os.path.splitext(url)[-1]
+
+            # Sanitize the article title and ensure it is no more than 20 characters
+            sanitized_title = re.sub(r'[<>:"/\\|?*]', "", article_title)
+            short_title = sanitized_title[:20]
+
+            # Create the full filename
+            filename = f"{short_title}{file_extension}"
+
+            # Define the download path
+            project_dir = str(os.getcwd())
+            full_path = Path(project_dir, "output", "downloads")
+
+            if not os.path.isdir(full_path):
+                os.makedirs(full_path)
+
+            if os.path.isdir(full_path):
+                full_path = os.path.join(full_path, filename)
+                logger.info(f"Downloading image: {url}")
+                urllib.request.urlretrieve(url, full_path)
+                return full_path
+        except URLError as e:
+            logger.critical(f"URLError: {e}")
+            return None
+        except Exception as e:
+            logger.critical(f"Unexpected error: {e}")
+            return None
 
     @staticmethod
     def prepare_articles(list_articles: list[Article], phrase: str) -> list[Article]:
@@ -375,27 +433,41 @@ class ExcelOtherMethods:
                     art.title = article.title
                     art.date = article.date
                     art.title_count_phrase = len(
-                        re.findall(re.escape(phrase), article.title.strip(), re.IGNORECASE)
+                        re.findall(
+                            re.escape(phrase), article.title.strip(), re.IGNORECASE
+                        )
                     )
                     art.description = article.description
                     art.description_count_phrase = len(
-                        re.findall(re.escape(phrase), article.description.strip(), re.IGNORECASE)
+                        re.findall(
+                            re.escape(phrase),
+                            article.description.strip(),
+                            re.IGNORECASE,
+                        )
                     )
-                    art.find_money_title_description = ExcelOtherMethods.__contains_money(
-                        article.title
+                    art.find_money_title_description = (
+                        ExcelOtherMethods.__contains_money(article.title)
                     )
                     if len(article.picture_filename) > 0:
                         art.picture_filename = article.picture_filename
                         art.picture_local_path = ExcelOtherMethods.__download_image(
-                            art.picture_filename,
-                            article.title.strip()
+                            art.picture_filename, article.title.strip()
                         )
                     new_list_articles.append(art)
                     logger.info(f"Article created: {art.to_dict()}")
                 return new_list_articles
-        
+
+        except AttributeError as e:
+            logger.critical(f"AttributeError: {e}")
+            return None
+        except TypeError as e:
+            logger.critical(f"TypeError: {e}")
+            return None
+        except re.error as e:
+            logger.critical(f"Regex error: {e}")
+            return None
         except Exception as e:
-            logger.critical(f"An error occurred: {e.__cause__}.")
+            logger.critical(f"Unexpected error: {e}")
             return None
 
     @staticmethod
@@ -419,13 +491,21 @@ class ExcelOtherMethods:
                 ws.cell(row=1, column=col_num, value=header)
             for row_index, row_data in enumerate(data, start=2):
                 for col_index, header in enumerate(headers, start=1):
-                    ws.cell(row=row_index, column=col_index, value=row_data.get(header, ""))
+                    ws.cell(
+                        row=row_index, column=col_index, value=row_data.get(header, "")
+                    )
             logger.info("Excel file created.")
             logger.info("Creating Output...")
             wb.save(excel_file_path)
-        
-        except Exception as e:
-            logger.critical(f"An error occurred: {e.__cause__}.")
+        except json.JSONDecodeError as e:
+            logger.critical(f"JSONDecodeError: {e}")
             return None
-        
-        
+        except FileNotFoundError as e:
+            logger.critical(f"FileNotFoundError: {e}")
+            return None
+        except PermissionError as e:
+            logger.critical(f"PermissionError: {e}")
+            return None
+        except Exception as e:
+            logger.critical(f"Unexpected error: {e}")
+            return None
