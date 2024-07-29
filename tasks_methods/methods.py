@@ -45,7 +45,7 @@ class ProducerMethods:
                             results=int(row[3]),
                         )
                         if not debug:
-                            workitems.outputs.create(
+                            return workitems.outputs.create(
                                 payload={
                                     "phrase_test": payload.phrase_test,
                                     "section": payload.section,
