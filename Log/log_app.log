@@ -405,3 +405,9 @@ TypeError: Selenium.open_chrome_browser() got an unexpected keyword argument 'op
 [32m2024-07-26 22:16:51 - Python RPA Challenge -> Tasks - tasks_local_test.py - [32mINFO    : [32mSaving articles to Excel[0m
 [32m2024-07-26 22:16:51 - Python RPA Challenge -> Scraping - methods.py - [32mINFO    : [32mExcel file created.[0m
 [32m2024-07-26 22:16:51 - Python RPA Challenge -> Scraping - methods.py - [32mINFO    : [32mCreating Output...[0m
+[32m2024-07-29 11:05:02 - Python RPA Challenge -> Tasks - tasks.py - [32mINFO    : [32mInitial create workitem[0m
+2024-07-29 11:05:11 - Python RPA Challenge -> Scraping - methods.py - CRITICAL: The CSV file: devdata\csv_input.csv was not found.[0m
+[32m2024-07-29 11:11:42 - Python RPA Challenge -> Tasks - tasks.py - [32mINFO    : [32mInitial create workitem[0m
+[32m2024-07-29 11:12:03 - Python RPA Challenge -> Tasks - tasks.py - [32mINFO    : [32mInitial create workitem[0m
+[32m2024-07-29 11:12:50 - Python RPA Challenge -> Tasks - tasks.py - [32mINFO    : [32mEnd of create workitem[0m
+[32m2024-07-29 11:13:07 - Python RPA Challenge -> Tasks - tasks.py - [32mINFO    : [32mEnd of create workitem[0m
