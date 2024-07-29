@@ -25,9 +25,9 @@ def producer():
 @task
 def scrapper():
     """Process all the produced input Work Items from the previous step."""
-    pay = workitems.inputs.current
+    pay = ScraperMethods.get_work_item()
     if pay:
-        logger.info("The current item from the work item has been retrieved")
+        logger.info(f"The current item from the work item has been retrieved: {pay.to_dict()}")
     driver = get_driver(site_url=os.getenv("site_url"), headless=os.getenv("headless"))
     initial_search = ScraperMethods.inicial_search(
         driver=driver, phrase=pay.phrase_test
