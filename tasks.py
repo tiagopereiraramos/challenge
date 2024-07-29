@@ -12,7 +12,14 @@ logger = Logs.Returnlog(os.getenv("name_app"), "Tasks")
 
 @task
 def producer():
-    get_csv_produce_work_item()
+    try:
+        logger.info("Initial create workitem")
+        payload = get_csv_produce_work_item()
+        logger.info("End of create workitem")
+        return payload
+    except ValueError as e:
+        logger.critical(f"ValueError: {e}")
+        return None
 
 
 @task
@@ -68,5 +75,6 @@ def scrapper():
         logger.critical("There is a problem with a inicial search")
 
 
-def get_csv_produce_work_item():
-    ProducerMethods.read_csv_create_work_item()
+def get_csv_produce_work_item()->str:
+    payload = ProducerMethods.read_csv_create_work_item()
+    return payload
