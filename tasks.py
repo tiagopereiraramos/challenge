@@ -1,19 +1,24 @@
+from pathlib import Path
+from robocorp import workitems
+from robocorp.tasks import task
 from Log.logs import Logs
 from webdriver_util.webdrv_util import *
 from dotenv import load_dotenv
-from tasks_methods.methods import (
-    ExcelOtherMethods, ProducerMethods, ScraperMethods)
+from tasks_methods.methods import ExcelOtherMethods, ProducerMethods, ScraperMethods
 
 load_dotenv("config\.env")
 logger = Logs.Returnlog(os.getenv("name_app"), "Tasks")
 
 
-def get_csv_produce_work_item():
-    ProducerMethods.read_csv_create_work_item()
+@task
+def producer():
+    get_csv_produce_work_item()
 
 
+@task
 def scrapper():
-    pay = ProducerMethods.read_csv_create_work_item(True)
+    """Process all the produced input Work Items from the previous step."""
+    pay = workitems.inputs.current
     if pay:
         logger.info("The current item from the work item has been retrieved")
     driver = get_driver(site_url=os.getenv("site_url"), headless=os.getenv("headless"))
@@ -63,4 +68,5 @@ def scrapper():
         logger.critical("There is a problem with a inicial search")
 
 
-scraper_and_output_file()
+def get_csv_produce_work_item():
+    ProducerMethods.read_csv_create_work_item()
